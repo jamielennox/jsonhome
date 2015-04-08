@@ -1,0 +1,7 @@
+[run]
+branch = True
+source = jsonhome
+omit = jsonhome/tests/*,jsonhome/openstack/*
+
+[report]
+ignore-errors = True
