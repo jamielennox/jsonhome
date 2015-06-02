@@ -127,6 +127,7 @@ class Resource(dict):
 
     allow_delete = _allow_prop('DELETE')
     allow_get = _allow_prop('GET')
+    allow_head = _allow_prop('HEAD')
     allow_options = _allow_prop('OPTIONS')
     allow_patch = _allow_prop('PATCH')
     allow_post = _allow_prop('POST')
@@ -181,6 +182,7 @@ class Resource(dict):
 
         :param bool allow_delete: allow the DELETE method on resource.
         :param bool allow_get: allow the GET method on resource.
+        :param bool allow_head: allow the HEAD method on resource.
         :param bool allow_options: allow the OPTIONS method on resource.
         :param bool allow_patch: allow the PATCH method on resource.
         :param bool allow_post: allow the POST method on resource.
@@ -224,6 +226,7 @@ class Resource(dict):
                                         'docs',
                                         'allow_delete',
                                         'allow_get',
+                                        'allow_head',
                                         'allow_options',
                                         'allow_patch',
                                         'allow_post',
@@ -275,6 +278,7 @@ class Document(dict):
 
         :param bool allow_delete: allow the DELETE method on resource.
         :param bool allow_get: allow the GET method on resource.
+        :param bool allow_head: allow the HEAD method on resource.
         :param bool allow_options: allow the OPTIONS method on resource.
         :param bool allow_patch: allow the PATCH method on resource.
         :param bool allow_post: allow the POST method on resource.
