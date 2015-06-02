@@ -82,6 +82,10 @@ class Resource(dict):
     def href_template(self):
         return self.get('href-template')
 
+    @href_template.setter
+    def href_template(self, value):
+        self['href-template'] = value
+
     @property
     def href(self):
         """A Direct URI Link to a resource."""
@@ -178,6 +182,7 @@ class Resource(dict):
         a number of attributes in one method.
 
         :param str href: A direct URI link to a resource.
+        :param str href_template: A template from which a URI is determined.
         :param str docs: location for human-readable documentation.
 
         :param bool allow_delete: allow the DELETE method on resource.
@@ -223,6 +228,7 @@ class Resource(dict):
 
         for method, value in _available(kwargs,
                                         'href',
+                                        'href_template',
                                         'docs',
                                         'allow_delete',
                                         'allow_get',
@@ -274,6 +280,7 @@ class Document(dict):
             be used to identity resources.
 
         :param str href: A direct URI link to a resource.
+        :param str href_template: A template from which a URI is determined.
         :param str docs: location for human-readable documentation.
 
         :param bool allow_delete: allow the DELETE method on resource.
