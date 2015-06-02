@@ -256,6 +256,8 @@ class Resource(dict):
 class Document(dict):
     """A model of a JSON Home document that can be manipulated."""
 
+    resource_class = Resource
+
     def __setitem__(self, relation, value):
         if relation in self:
             raise ResourceAlreadyExists(relation)
@@ -317,7 +319,7 @@ class Document(dict):
             the document so a user may perform additional manipulation.
         :rtype: :py:class:`~jsonhome.Resource`.
         """
-        r = Resource.create(**kwargs)
+        r = self.resource_class.create(**kwargs)
         self[relation] = r
         return r
 
@@ -342,7 +344,7 @@ class Document(dict):
 
         :rtype: :py:class:`~jsonhome.Document`
         """
-        return cls(dict((relation, Resource(d))
+        return cls(dict((relation, cls.resource_class(d))
                         for relation, d in data['resources'].items()))
 
     def to_json(self):
