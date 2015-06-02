@@ -66,11 +66,8 @@ def _available(kwargs, *args):
     """Return available keyword arguments for requested keys"""
 
     for method in args:
-        try:
-            value = kwargs.pop(method)
-        except KeyError:
-            pass
-        else:
+        value = kwargs.pop(method, None)
+        if value is not None:
             yield method, value
 
 
