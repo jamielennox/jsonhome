@@ -16,6 +16,18 @@ import json
 import uritemplate
 
 
+__all__ = ['Document',
+           'Resource',
+
+           'MEDIA_TYPE',
+
+           'JsonHomeException',
+           'MissingValues',
+           'UnknownResource',
+           'ResourceAlreadyExists'
+           ]
+
+
 MEDIA_TYPE = 'application/json-home'
 
 
@@ -54,111 +66,110 @@ def _allow_prop(method):
                     doc='Allow the %s method on this resource' % method)
 
 
-def _accept_prop(name, doc=None):
+def _item_prop(name, default=None, setdefault=None, hint=False):
+    """Create a property that fetches a value from the dictionary.
 
-    def _accept_getter(self):
-        return self.hints.setdefault('accept-%s' % name, [])
+    We implement getter, setter and deleter here. Whilst we may not want users
+    to do all of those things it is not our job to prevent users from doing
+    something stupid. Our goal is to provide helper functions and if people go
+    and delete hints or force set multiple href methods that's not our fault.
 
-    return property(_accept_getter, doc=doc)
+    Note that set
+    :param default: A value that is returned if nothing present in the object.
+        This value will be ignored if setdefault is set.
+    :param callable setdefault: A value set and returned if nothing present in
+        the object. This value will take priority to default. Note that this is
+        a callable so the set value will be the result of executing this
+        function. This allows us to create new objects for default values.
+    :param bool hint: True if this attribute exists in the hints dictionary.
 
+    :rtype: property
+    """
 
-def _available(kwargs, *args):
-    """Return available keyword arguments for requested keys"""
+    def o(self):
+        return self.hints if hint else self
 
-    for method in args:
-        value = kwargs.pop(method, None)
-        if value is not None:
-            yield method, value
+    def _getter(self):
+        if setdefault:
+            return o(self).setdefault(name, setdefault())
+        else:
+            return o(self).get(name, default)
+
+    def _setter(self, value):
+        o(self)[name] = value
+
+    def _deleter(self):
+        o(self).pop(name, None)
+
+    return property(_getter, _setter, _deleter)
 
 
 class Resource(dict):
     """One resource that exists within a JSON home document."""
 
-    @property
-    def href_vars(self):
-        return self.setdefault('href-vars', {})
+    href_vars = _item_prop('href-vars', setdefault=dict)
+    """A indication for variables in the template to construct a URI."""
 
-    @property
-    def href_template(self):
-        return self.get('href-template')
+    href_template = _item_prop('href-template')
+    """A templated URI link to a resource."""
 
-    @href_template.setter
-    def href_template(self, value):
-        self['href-template'] = value
+    href = _item_prop('href')
+    """A Direct URI Link to a resource."""
 
-    @property
-    def href(self):
-        """A Direct URI Link to a resource."""
-        return self.get('href')
+    hints = _item_prop('hints', setdefault=dict)
+    """Additional hint information defined by the resource.
 
-    @href.setter
-    def href(self, value):
-        self['href'] = value
+    Resource hints allow clients to find relevant information about
+    interacting with a resource beforehand, as a means of optimising
+    communications, as well as advertising available behaviours (e.g., to
+    aid in laying out a user interface for consuming the API).
 
-    @property
-    def hints(self):
-        """Additional hint information defined by the resource.
+    Hints are just that - they are not a "contract", and are to only be
+    taken as advisory.  The runtime behaviour of the resource always
+    overrides hinted information.
 
-        Resource hints allow clients to find relevant information about
-        interacting with a resource beforehand, as a means of optimising
-        communications, as well as advertising available behaviours (e.g., to
-        aid in laying out a user interface for consuming the API).
+    For example, a resource might hint that the PUT method is allowed on
+    all "widget" resources.  This means that generally, the user has the
+    ability to PUT to a particular resource, but a specific resource
+    might reject a PUT based upon access control or other considerations.
+    More fine-grained information might be gathered by interacting with
+    the resource (e.g., via a GET), or by another resource "containing"
+    it (such as a "widgets" collection) or describing it (e.g., one
+    linked to it with a "describedby" link relation).
+    """
 
-        Hints are just that - they are not a "contract", and are to only be
-        taken as advisory.  The runtime behaviour of the resource always
-        overrides hinted information.
+    allow = _item_prop('allow', setdefault=list, hint=True)
+    """HTTP Allow Methods for this resource.
 
-        For example, a resource might hint that the PUT method is allowed on
-        all "widget" resources.  This means that generally, the user has the
-        ability to PUT to a particular resource, but a specific resource
-        might reject a PUT based upon access control or other considerations.
-        More fine-grained information might be gathered by interacting with
-        the resource (e.g., via a GET), or by another resource "containing"
-        it (such as a "widgets" collection) or describing it (e.g., one
-        linked to it with a "describedby" link relation).
-        """
-        return self.setdefault('hints', {})
+    Hints the HTTP methods that the current client will be able to use to
+    interact with the resource; equivalent to the Allow HTTP response
+    header.
+    """
 
-    @property
-    def allow(self):
-        """HTTP Allow Methods for this resource.
+    accept_patch = _item_prop('accept-patch', setdefault=list, hint=True)
+    """Hints the PATCH request formats accepted by the resource.
 
-        Hints the HTTP methods that the current client will be able to use to
-        interact with the resource; equivalent to the Allow HTTP response
-        header.
-        """
-        return self.hints.setdefault('allow', [])
+    This is equivalent to the Accept-Patch HTTP response header.
+    """
 
-    allow_delete = _allow_prop('DELETE')
-    allow_get = _allow_prop('GET')
-    allow_head = _allow_prop('HEAD')
-    allow_options = _allow_prop('OPTIONS')
-    allow_patch = _allow_prop('PATCH')
-    allow_post = _allow_prop('POST')
-    allow_put = _allow_prop('PUT')
+    accept_post = _item_prop('accept-post', setdefault=list, hint=True)
+    """Hints the POST request formats accepted by the resource."""
 
-    accept_patch = _accept_prop('patch')
-    accept_post = _accept_prop('post')
-    accept_prefer = _accept_prop('prefer')
-    accept_ranges = _accept_prop('ranges')
+    accept_prefer = _item_prop('accept-prefer', setdefault=list, hint=True)
+    """Hints the preferences supported by the resource.
 
-    @property
-    def docs(self):
-        """The location for human-readable documentation for the resource."""
-        return self.hints.get('docs')
+    Note that, as per that specifications, a preference can be ignored by the
+    server.
+    """
 
-    @docs.setter
-    def docs(self, value):
-        self.hints['docs'] = value
+    accept_ranges = _item_prop('accept-ranges', setdefault=list, hint=True)
+    """Hints the range-specifiers available to the client.
 
-    def get_uri(self, **kwargs):
-        if self.href:
-            return self.href
+    This is equivalent to the Accept-Ranges HTTP response header.
+    """
 
-        if self.href_template:
-            return uritemplate.expand(self.href_template, **kwargs)
-
-        raise MissingValues("Couldn't determine href from values in Resource")
+    docs = _item_prop('docs', hint=True)
+    """The location for human-readable documentation for the resource."""
 
     def is_allowed(self, method):
         """Test if a HTTP method can be used with this resource.
@@ -173,6 +184,23 @@ class Resource(dict):
             return None
         else:
             return method.upper() in (a.upper() for a in allowed)
+
+    allow_delete = _allow_prop('DELETE')
+    allow_get = _allow_prop('GET')
+    allow_head = _allow_prop('HEAD')
+    allow_options = _allow_prop('OPTIONS')
+    allow_patch = _allow_prop('PATCH')
+    allow_post = _allow_prop('POST')
+    allow_put = _allow_prop('PUT')
+
+    def get_uri(self, **kwargs):
+        if self.href:
+            return self.href
+
+        if self.href_template:
+            return uritemplate.expand(self.href_template, **kwargs)
+
+        raise MissingValues("Couldn't determine href from values in Resource")
 
     @classmethod
     def create(cls, **kwargs):
@@ -226,25 +254,26 @@ class Resource(dict):
 
         r = cls()
 
-        for method, value in _available(kwargs,
-                                        'href',
-                                        'href_template',
-                                        'docs',
-                                        'allow_delete',
-                                        'allow_get',
-                                        'allow_head',
-                                        'allow_options',
-                                        'allow_patch',
-                                        'allow_post',
-                                        'allow_put'):
-            setattr(r, method, value)
+        for method in ('href',
+                       'href_template',
+                       'href_vars',
+                       'docs',
 
-        for method, value in _available(kwargs,
-                                        'accept_patch',
-                                        'accept_post',
-                                        'accept_prefer',
-                                        'accept_ranges'):
-            getattr(r, method).extend(value)
+                       'allow_delete',
+                       'allow_get',
+                       'allow_head',
+                       'allow_options',
+                       'allow_patch',
+                       'allow_post',
+                       'allow_put',
+
+                       'accept_patch',
+                       'accept_post',
+                       'accept_prefer',
+                       'accept_ranges'):
+            value = kwargs.pop(method, None)
+            if value is not None:
+                setattr(r, method, value)
 
         if kwargs:
             msg = 'create got an unexpected argument: %s' % ', '.join(kwargs)
