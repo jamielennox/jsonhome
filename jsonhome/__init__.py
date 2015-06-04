@@ -194,6 +194,14 @@ class Resource(dict):
     allow_put = _allow_prop('PUT')
 
     def get_uri(self, **kwargs):
+        """Get an absolute URI for this resource.
+
+        Fetch the absolute URI. If there is an absolute URI set on this
+        resource that will be returned.
+
+        If there is a templated URI then the variables in the template will be
+        evaluated against the values passed in through keyword arguments.
+        """
         if self.href:
             return self.href
 
@@ -201,6 +209,48 @@ class Resource(dict):
             return uritemplate.expand(self.href_template, **kwargs)
 
         raise MissingValues("Couldn't determine href from values in Resource")
+
+    def set_uri(self, uri, **kwargs):
+        """Set the URI on this resource based on its format.
+
+        Selective set the href or href-template and href-vars depending on if
+        the URI contains a templated form or not. If there are variables set in
+        the URI then a relation name be passed as a kwarg as well.
+
+        Passing an absolute URI::
+
+            res.set_uri('/path/to/resource')
+
+        Passing a templated URI::
+
+            res.set_uri('/path/to/resource{/param}',
+                        param='http://description/rel/param')
+
+        :param str uri: The URI you want to set. This may contain variables.
+
+        :raises jsonhome.MissingValues: If a templated URI is passed and there
+            is not a relation passed as a keyword argument that matches the
+            variable.
+        """
+        variables = uritemplate.URITemplate(uri).variables
+
+        if variables:
+            try:
+                href_vars = dict((n, kwargs.pop(n))
+                                 for v in variables
+                                 for n in v.variable_names)
+            except KeyError as e:
+                msg = "Missing parameter %s from template" % str(e)
+                raise MissingValues(msg)
+
+            del self.href
+            self.href_template = uri
+            self.href_vars = href_vars
+
+        else:
+            self.href = uri
+            del self.href_template
+            del self.href_vars
 
     @classmethod
     def create(cls, **kwargs):
@@ -286,6 +336,7 @@ class Document(dict):
     """A model of a JSON Home document that can be manipulated."""
 
     resource_class = Resource
+    """The class of resource that should be created."""
 
     def __setitem__(self, relation, value):
         if relation in self:
@@ -294,6 +345,17 @@ class Document(dict):
         super(Document, self).__setitem__(relation, value)
 
     def get_uri(self, relation, **kwargs):
+        """Get an absolute URI for this resource.
+
+        Fetch the absolute URI. If there is an absolute URI set on this
+        resource that will be returned.
+
+        If there is a templated URI then the variables in the template will be
+        evaluated against the values passed in through keyword arguments.
+
+        :param str relation: The relation to the resource you wish to get the
+            URI for.
+        """
         try:
             res = self[relation]
         except KeyError:

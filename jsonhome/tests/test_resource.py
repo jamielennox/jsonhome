@@ -93,3 +93,35 @@ class ResourceTests(base.TestCase):
 
         self.assertIn('variablea', s)
         self.assertIn('variableb', s)
+
+    def test_setting_full_uri(self):
+        uri = '/path/to/resource'
+        self.res.set_uri(uri)
+
+        self.assertEqual(uri, self.res.href)
+        self.assertResource({'href': uri})
+
+    def test_setting_template_uri(self):
+        uri = '/path/to/resource{/vara}?param={varb}'
+        vara = 'http://url/describes/vara'
+        varb = 'http://url/describes/varb'
+
+        self.res.set_uri(uri, vara=vara, varb=varb)
+
+        href_vars = {'vara': vara, 'varb': varb}
+        self.assertEqual(uri, self.res.href_template)
+        self.assertEqual(href_vars, self.res.href_vars)
+        self.assertResource({'href-template': uri, 'href-vars': href_vars})
+
+        self.assertEqual('/path/to/resource/foo?param=',
+                         self.res.get_uri(vara='foo'))
+        self.assertEqual('/path/to/resource/foo?param=bar',
+                         self.res.get_uri(vara='foo', varb='bar'))
+        self.assertEqual('/path/to/resource?param=bar',
+                         self.res.get_uri(varb='bar'))
+
+    def test_not_enough_template_variables(self):
+        self.assertRaises(jsonhome.MissingValues,
+                          self.res.set_uri,
+                          '/path/to/resource{/vara}?param={varb}',
+                          vara='http://url/describes/vara')
