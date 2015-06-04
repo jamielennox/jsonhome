@@ -207,3 +207,9 @@ class DocumentTests(base.TestCase):
                                            'are': 'ignored'})
 
         self.assertDocument({'relation': {'href': 'href-value'}})
+
+    def test_unknown_resource(self):
+        self.assertRaises(jsonhome.UnknownResource,
+                          self.doc.get_uri,
+                          'unknown',
+                          key='val')

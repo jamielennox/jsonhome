@@ -125,3 +125,22 @@ class ResourceTests(base.TestCase):
                           self.res.set_uri,
                           '/path/to/resource{/vara}?param={varb}',
                           vara='http://url/describes/vara')
+
+    def test_no_href(self):
+        self.assertRaises(jsonhome.MissingValues, self.res.get_uri)
+
+    def test_create_multiple_href(self):
+        self.assertRaises(ValueError,
+                          jsonhome.Resource.create,
+                          href='href-value',
+                          href_template='href-template')
+
+        self.assertRaises(ValueError,
+                          jsonhome.Resource.create,
+                          href='href-value',
+                          uri='uri-value')
+
+        self.assertRaises(ValueError,
+                          jsonhome.Resource.create,
+                          uri='uri-value',
+                          href_template='href-template')
