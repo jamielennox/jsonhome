@@ -261,6 +261,13 @@ class Resource(dict):
 
         :param str href: A direct URI link to a resource.
         :param str href_template: A template from which a URI is determined.
+        :param dict href_vars: The raw href variables that should be set.
+
+        :param str uri: A templatable URI, of the form expected by
+            :py:meth:`~jsonhome.Resource.set_uri`.
+        :param dict uri_vars: The URI variables that are interpolated in the
+            form expected by :py:meth:`~jsonhome.Resource.set_uri`.
+
         :param str docs: location for human-readable documentation.
 
         :param bool allow_delete: allow the DELETE method on resource.
@@ -302,11 +309,29 @@ class Resource(dict):
         if kwargs.get('accept_post'):
             kwargs.setdefault('allow_post', True)
 
+        # ensure that the URI is only handled in one way.
+        uri = kwargs.pop('uri', None)
+        uri_vars = kwargs.pop('uri_vars', {})
+
+        # NOTE(jamielennox): we purposefully only check uri here, not uri_vars
+        # so that you can keep a repository of uri_vars that are passed every
+        # time and ignored if no uri parameter is passed.
+        if sum([bool(uri),
+                bool(kwargs.get('href')),
+                bool(kwargs.get('href_template') or
+                     kwargs.get('href_vars'))]) > 1:
+            m = 'You should choose only one way to set the URI on a resource.'
+            raise ValueError(m)
+
         r = cls()
+
+        if uri:
+            r.set_uri(uri, **uri_vars)
 
         for method in ('href',
                        'href_template',
                        'href_vars',
+
                        'docs',
 
                        'allow_delete',
@@ -374,6 +399,13 @@ class Document(dict):
 
         :param str href: A direct URI link to a resource.
         :param str href_template: A template from which a URI is determined.
+        :param dict href_vars: The raw href variables that should be set.
+
+        :param str uri: A templatable URI, of the form expected by
+            :py:meth:`~jsonhome.Resource.set_uri`.
+        :param dict uri_vars: The URI variables that are interpolated in the
+            form expected by :py:meth:`~jsonhome.Resource.set_uri`.
+
         :param str docs: location for human-readable documentation.
 
         :param bool allow_delete: allow the DELETE method on resource.

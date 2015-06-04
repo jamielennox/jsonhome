@@ -161,3 +161,49 @@ class DocumentTests(base.TestCase):
 
         x2 = d.to_json()
         self.assertEqual(x1, x2)
+
+    def test_create_with_absolute_uri(self):
+        r = self.doc.create_resource('relation', uri='href-value')
+        self.assertEqual('href-value', r.href)
+        self.assertIsNone(r.href_template)
+        self.assertDocument({'relation': {'href': 'href-value'}})
+
+    def test_create_with_template_uri(self):
+        r = self.doc.create_resource('relation',
+                                     uri='/path{/param}',
+                                     uri_vars={'param': 'foo'})
+
+        self.assertIsNone(r.href)
+        self.assertEqual('/path{/param}', r.href_template)
+        self.assertEqual({'param': 'foo'}, r.href_vars)
+
+        self.assertEqual('/path/val',
+                         self.doc.get_uri('relation', param='val'))
+
+        self.assertDocument({'relation': {'href-template': '/path{/param}',
+                                          'href-vars': {'param': 'foo'}}})
+
+    def test_create_not_enough_variables(self):
+        self.assertRaises(jsonhome.MissingValues,
+                          self.doc.create_resource,
+                          'relation',
+                          uri='/path{/param}')
+
+    def test_ignore_extra_uri_vars(self):
+        self.doc.create_resource('relation',
+                                 uri='/path{/param}',
+                                 uri_vars={'param': 'foo',
+                                           'extra': 'vals',
+                                           'are': 'ignored'})
+
+        self.assertDocument({'relation': {'href-template': '/path{/param}',
+                                          'href-vars': {'param': 'foo'}}})
+
+    def test_ignore_unused_uri_vars(self):
+        self.doc.create_resource('relation',
+                                 href='href-value',
+                                 uri_vars={'param': 'foo',
+                                           'extra': 'vals',
+                                           'are': 'ignored'})
+
+        self.assertDocument({'relation': {'href': 'href-value'}})
