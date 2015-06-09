@@ -364,6 +364,9 @@ class Document(dict):
     """The class of resource that should be created."""
 
     def __setitem__(self, relation, value):
+        if not isinstance(value, self.resource_class):
+            raise TypeError('Can only set valid resources on Document')
+
         if relation in self:
             raise ResourceAlreadyExists(relation)
 

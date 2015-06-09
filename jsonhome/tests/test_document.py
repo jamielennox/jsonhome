@@ -213,3 +213,12 @@ class DocumentTests(base.TestCase):
                           self.doc.get_uri,
                           'unknown',
                           key='val')
+
+    def test_cant_set_invalid_resource_type(self):
+        def _f(k, v):
+            """Function is just rather that using __setitem__ directly."""
+            self.doc[k] = v
+
+        self.assertRaises(TypeError, _f, 'relation', 'somestring')
+        self.assertRaises(TypeError, _f, 'relation', 42)
+        self.assertRaises(TypeError, _f, 'relation', ['list', 'of', 'stuff'])
