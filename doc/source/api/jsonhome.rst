@@ -6,8 +6,6 @@ Subpackages
 
 .. toctree::
 
-    jsonhome.tests
-
 Module contents
 ---------------
 
