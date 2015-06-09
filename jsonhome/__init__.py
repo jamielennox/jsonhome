@@ -473,7 +473,7 @@ class Document(dict):
         return cls(dict((relation, cls.resource_class(d))
                         for relation, d in data['resources'].items()))
 
-    def to_json(self):
+    def to_json(self, **kwargs):
         """Convert the Document into JSON format.
 
         Serialize the json-home document into valid JSON so that it can be sent
@@ -481,7 +481,7 @@ class Document(dict):
 
         :rtype: str
         """
-        return json.dumps(self.to_dict())
+        return json.dumps(self.to_dict(), **kwargs)
 
     @classmethod
     def from_json(cls, data):
