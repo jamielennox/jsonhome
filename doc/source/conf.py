@@ -66,7 +66,7 @@ htmlhelp_basename = '%sdoc' % project
 latex_documents = [
     ('index',
      '%s.tex' % project,
-     u'%s Documentation' % project)
+     u'%s Documentation' % project,
      u'Jamie Lennox', 'manual'),
 ]
 
