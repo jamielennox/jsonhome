@@ -23,7 +23,6 @@ sys.path.insert(0, os.path.abspath('../..'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
-    'oslosphinx'
 ]
 
 # autodoc generation is a bit aggressive and a nuisance when doing heavy
@@ -38,7 +37,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'jsonhome'
-copyright = u'2013, OpenStack Foundation'
+copyright = u'2015, Jamie Lennox'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = True
@@ -67,8 +66,8 @@ htmlhelp_basename = '%sdoc' % project
 latex_documents = [
     ('index',
      '%s.tex' % project,
-     u'%s Documentation' % project,
-     u'OpenStack Foundation', 'manual'),
+     u'%s Documentation' % project)
+     u'Jamie Lennox', 'manual'),
 ]
 
 # Example configuration for intersphinx: refer to the Python standard library.
