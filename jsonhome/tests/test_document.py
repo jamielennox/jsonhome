@@ -24,20 +24,20 @@ class DocumentTests(base.TestCase):
         self.assertEqual({'resources': data}, self.doc.to_dict())
 
     def test_create_allow_delete(self):
-        r = self.doc.create_resource('relation', allow_delete=True)
+        r = self.doc.add_resource('relation', allow_delete=True)
 
         self.assertTrue(r.allow_delete)
         self.assertDocument({'relation': {'hints': {'allow': ['DELETE']}}})
 
     def test_create_docs(self):
-        r = self.doc.create_resource('relation', docs='doc-location')
+        r = self.doc.add_resource('relation', docs='doc-location')
 
         self.assertEqual('doc-location', r.docs)
         self.assertDocument({'relation': {'hints': {'docs': 'doc-location'}}})
 
     def test_accept_patch(self):
         f = 'application/json-patch'
-        r = self.doc.create_resource('relation', accept_patch=[f])
+        r = self.doc.add_resource('relation', accept_patch=[f])
 
         # setting accept_patch also sets the allow_patch flag
         self.assertEqual([f], r.accept_patch)
@@ -48,7 +48,7 @@ class DocumentTests(base.TestCase):
 
     def test_accept_post(self):
         f = 'application/json'
-        r = self.doc.create_resource('relation', accept_post=[f])
+        r = self.doc.add_resource('relation', accept_post=[f])
 
         # setting accept_post also sets the allow_post flag
         self.assertEqual([f], r.accept_post)
@@ -58,21 +58,21 @@ class DocumentTests(base.TestCase):
                                                     'allow': ['POST']}}})
 
     def test_accept_ranges(self):
-        r = self.doc.create_resource('relation', accept_ranges=['bytes'])
+        r = self.doc.add_resource('relation', accept_ranges=['bytes'])
 
         self.assertEqual(['bytes'], r.accept_ranges)
         d = {'relation': {'hints': {'accept-ranges': ['bytes']}}}
         self.assertDocument(d)
 
     def test_accept_prefer(self):
-        r = self.doc.create_resource('relation', accept_prefer=['preference'])
+        r = self.doc.add_resource('relation', accept_prefer=['preference'])
 
         self.assertEqual(['preference'], r.accept_prefer)
         d = {'relation': {'hints': {'accept-prefer': ['preference']}}}
         self.assertDocument(d)
 
     def test_href(self):
-        r = self.doc.create_resource('relation', href='href-value')
+        r = self.doc.add_resource('relation', href='href-value')
 
         self.assertEqual('href-value', r.href)
         self.assertEqual('href-value', r.get_uri())
@@ -81,7 +81,7 @@ class DocumentTests(base.TestCase):
 
     def test_raises_type_error_on_unknown_create(self):
         e = self.assertRaises(TypeError,
-                              self.doc.create_resource,
+                              self.doc.add_resource,
                               'relation',
                               variablea='foo',
                               variableb='bar')
@@ -92,10 +92,10 @@ class DocumentTests(base.TestCase):
         self.assertIn('variableb', s)
 
     def test_cant_install_resource_twice(self):
-        r = self.doc.create_resource('relation')
+        r = self.doc.add_resource('relation')
 
         self.assertRaises(jsonhome.ResourceAlreadyExists,
-                          self.doc.create_resource,
+                          self.doc.add_resource,
                           'relation')
 
         self.assertRaises(jsonhome.ResourceAlreadyExists,
@@ -105,42 +105,42 @@ class DocumentTests(base.TestCase):
 
     def test_simple_document_equality(self):
         d1 = jsonhome.Document()
-        d1.create_resource('relation', allow_delete=True)
+        d1.add_resource('relation', allow_delete=True)
 
         d2 = jsonhome.Document()
-        d2.create_resource('relation', allow_delete=True)
+        d2.add_resource('relation', allow_delete=True)
 
         self.assertEqual(d1, d2)
 
     def test_equality_len_difference(self):
         d1 = jsonhome.Document()
-        d1.create_resource('relation', allow_delete=True)
-        d1.create_resource('another', allow_delete=True)
+        d1.add_resource('relation', allow_delete=True)
+        d1.add_resource('another', allow_delete=True)
 
         d2 = jsonhome.Document()
-        d2.create_resource('relation', allow_delete=True)
+        d2.add_resource('relation', allow_delete=True)
 
         self.assertNotEqual(d1, d2)
 
     def test_equality_relation_difference(self):
         d1 = jsonhome.Document()
-        d1.create_resource('relation', allow_delete=True)
-        d1.create_resource('foo', allow_delete=True)
+        d1.add_resource('relation', allow_delete=True)
+        d1.add_resource('foo', allow_delete=True)
 
         d2 = jsonhome.Document()
-        d2.create_resource('relation', allow_delete=True)
-        d2.create_resource('bar', allow_delete=True)
+        d2.add_resource('relation', allow_delete=True)
+        d2.add_resource('bar', allow_delete=True)
 
         self.assertNotEqual(d1, d2)
 
     def test_equality_resource_difference(self):
         d1 = jsonhome.Document()
-        d1.create_resource('relation', allow_delete=True)
-        d1.create_resource('another', allow_delete=True)
+        d1.add_resource('relation', allow_delete=True)
+        d1.add_resource('another', allow_delete=True)
 
         d2 = jsonhome.Document()
-        d2.create_resource('relation', allow_delete=True)
-        d2.create_resource('another', allow_delete=False)
+        d2.add_resource('relation', allow_delete=True)
+        d2.add_resource('another', allow_delete=False)
 
         self.assertNotEqual(d1, d2)
 
@@ -163,15 +163,15 @@ class DocumentTests(base.TestCase):
         self.assertEqual(x1, x2)
 
     def test_create_with_absolute_uri(self):
-        r = self.doc.create_resource('relation', uri='href-value')
+        r = self.doc.add_resource('relation', uri='href-value')
         self.assertEqual('href-value', r.href)
         self.assertIsNone(r.href_template)
         self.assertDocument({'relation': {'href': 'href-value'}})
 
     def test_create_with_template_uri(self):
-        r = self.doc.create_resource('relation',
-                                     uri='/path{/param}',
-                                     uri_vars={'param': 'foo'})
+        r = self.doc.add_resource('relation',
+                                  uri='/path{/param}',
+                                  uri_vars={'param': 'foo'})
 
         self.assertIsNone(r.href)
         self.assertEqual('/path{/param}', r.href_template)
@@ -185,26 +185,26 @@ class DocumentTests(base.TestCase):
 
     def test_create_not_enough_variables(self):
         self.assertRaises(jsonhome.MissingValues,
-                          self.doc.create_resource,
+                          self.doc.add_resource,
                           'relation',
                           uri='/path{/param}')
 
     def test_ignore_extra_uri_vars(self):
-        self.doc.create_resource('relation',
-                                 uri='/path{/param}',
-                                 uri_vars={'param': 'foo',
-                                           'extra': 'vals',
-                                           'are': 'ignored'})
+        self.doc.add_resource('relation',
+                              uri='/path{/param}',
+                              uri_vars={'param': 'foo',
+                                        'extra': 'vals',
+                                        'are': 'ignored'})
 
         self.assertDocument({'relation': {'href-template': '/path{/param}',
                                           'href-vars': {'param': 'foo'}}})
 
     def test_ignore_unused_uri_vars(self):
-        self.doc.create_resource('relation',
-                                 href='href-value',
-                                 uri_vars={'param': 'foo',
-                                           'extra': 'vals',
-                                           'are': 'ignored'})
+        self.doc.add_resource('relation',
+                              href='href-value',
+                              uri_vars={'param': 'foo',
+                                        'extra': 'vals',
+                                        'are': 'ignored'})
 
         self.assertDocument({'relation': {'href': 'href-value'}})
 

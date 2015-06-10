@@ -300,7 +300,7 @@ class Resource(dict):
         :rtype: :py:class:`~jsonhome.Resource`.
         """
         # NOTE(jamielennox): keep the above parameter list in sync with the
-        # Document.create_resource function below for better documentation.
+        # Document.add_resource function below for better documentation.
 
         # before we start handle some SHOULD aspects of the specification to
         # try and make the resources as consistent with the spec as possible.
@@ -391,7 +391,7 @@ class Document(dict):
 
         return res.get_uri(**kwargs)
 
-    def create_resource(self, relation, **kwargs):
+    def add_resource(self, relation, **kwargs):
         """Create a new resource on this document.
 
         Create a new resource with prefilled attributes and add it to the

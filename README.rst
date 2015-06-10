@@ -23,11 +23,11 @@ To build a jsonhome document you create a document and then add resources::
 
     >>> doc = jsonhome.Document()
 
-    >>> doc.create_resource('http://mysite.com/rel/widgets',
-    ...                     uri='/widgets{/widget_id}'
-    ...                     uri_vars={'widget_id': 'http://mysite.com/param/widget'},
-    ...                     allow_get=True,
-    ...                     accept_post=['application/json'])
+    >>> doc.add_resource('http://mysite.com/rel/widgets',
+    ...                  uri='/widgets{/widget_id}'
+    ...                  uri_vars={'widget_id': 'http://mysite.com/param/widget'},
+    ...                  allow_get=True,
+    ...                  accept_post=['application/json'])
 
     >>> print(doc.to_json())
     {
